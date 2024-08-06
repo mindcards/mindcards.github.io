@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mindcards</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #1a1a1a;
+            color: #f4f4f4;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+            border-bottom: 2px solid #0056b3; /* Header bottom border */
+        }
+        td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Thin line for rows */
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            background-color: #333;
+            color: #f4f4f4;
+            border: none;
+            border-radius: 4px;
+        }
+        button {
+            margin-left: 10px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .flashcards {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+        }
+        .card {
+            background-color: #333;
+            border: 1px solid #0056b3;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px;
+            width: 300px;
+            text-align: center;
+            position: relative;
+        }
+        .card .back {
+            display: none;
+        }
+        .recall-buttons {
+            margin-top: 20px;
+            display: none;
+        }
+        .recall-buttons button {
+            margin: 0 10px;
+        }
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .delete-button {
+            background-color: #dc3545; /* Bootstrap danger color */
+        }
+        .delete-button:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    
+</div>
+
+<div class="button-container">
+    <button onclick="addRow()">Add Card</button>
+    <button onclick="generateFlashcards()">Practice Cards</button>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Topics</th>
+            <th>Relation</th>
+            <th>Information</th>
+            <th>Action</th> <!-- New column for delete action -->
+        </tr>
+    </thead>
+    <tbody id="tableBody">
+        <tr>
+            <td><input type="text" placeholder="Enter Topic"></td>
+            <td><input type="text" placeholder="Enter Relation"></td>
+            <td><input type="text" placeholder="Enter Information"></td>
+            <td><button class="delete-button" onclick="deleteRow(this)">Delete</button></td> <!-- Delete button -->
+        </tr>
+    </tbody>
+</table>
+
+<div class="flashcards" id="flashcardsContainer">
+    <button class="close-button" onclick="exitFlashcards()">✖</button>
+    <div class="card" id="flashcard">
+        <div class="front">
+            <strong id="flashcardTopic"></strong><br>
+            <span id="flashcardRelation"></span>
+        </div>
+        <div class="back">
+            <strong>Information:</strong><br>
+            <span id="flashcardInfo"></span>
+        </div>
+    </div>
+    <button id="showAnswerButton" onclick="showAnswer()">Show Answer</button>
+    
+    <div class="recall-buttons" id="recallButtons">
+        <button onclick="recordRecall('no')">No</button>
+        <button onclick="recordRecall('partially')">Partially</button>
+        <button onclick="recordRecall('yes')">Yes</button>
+    </div>
+    <p>Did you recall your answer correctly?</p>
+</div>
+
+<script>
+    let flashcards = [];
+    let currentCardIndex = 0;
+    let recallQueue = [];
+
+    function addRow() {
+        const tableBody = document.getElementById('tableBody');
+        const newRow = document.createElement('tr');
+
+        newRow.innerHTML = `
+            <td><input type="text" placeholder="Enter Topic"></td>
+            <td><input type="text" placeholder="Enter Relation"></td>
+            <td><input type="text" placeholder="Enter Information"></td>
+            <td><button class="delete-button" onclick="deleteRow(this)">Delete</button></td>
+        `;
+
+        tableBody.appendChild(newRow);
+    }
+
+    function deleteRow(button) {
+        const row = button.parentElement.parentElement; // Get the row of the button
+        row.parentElement.removeChild(row); // Remove the row from the table
+    }
+
+    function generateFlashcards() {
+        const tableBody = document.getElementById('tableBody');
+        flashcards = []; // Clear previous flashcards
+
+        const rows = tableBody.getElementsByTagName('tr');
+        for (let row of rows) {
+            const topic = row.cells[0].querySelector('input').value;
+            const relation = row.cells[1].querySelector('input').value;
+            const information = row.cells[2].querySelector('input').value;
+
+            if (topic && information) { // Only create flashcards for filled topics
+                flashcards.push({ topic, relation, information });
+            }
+        }
+
+        if (flashcards.length > 0) {
+            currentCardIndex = 0;
+            recallQueue = []; // Reset recall queue
+            showFlashcard();
+        } else {
+            alert("Please enter at least one topic and information.");
+        }
+    }
+
+    function showFlashcard() {
+        const flashcard = document.getElementById('flashcard');
+        const flashcardTopic = document.getElementById('flashcardTopic');
+        const flashcardRelation = document.getElementById('flashcardRelation');
+        const flashcardInfo = document.getElementById('flashcardInfo');
+        const recallButtons = document.getElementById('recallButtons');
+        const showAnswerButton = document.getElementById('showAnswerButton');
+
+        if (currentCardIndex < flashcards.length) {
+            const card = flashcards[currentCardIndex];
+            flashcardTopic.innerText = card.topic;
+            flashcardRelation.innerText = card.relation;
+            flashcardInfo.innerText = card.information;
+
+            flashcard.classList.remove('flipped');
+            recallButtons.style.display = 'none';
+            showAnswerButton.style.display = 'inline-block';
+            document.getElementById('flashcardsContainer').style.display = 'flex';
+        } else {
+            // After viewing all flashcards, process recall queue
+            if (recallQueue.length > 0) {
+                currentCardIndex = 0; // Reset index for the recall queue
+                flashcards = recallQueue; // Use recall queue for the next round
+                recallQueue = []; // Clear the recall queue
+                showFlashcard();
+            } else {
+                alert("You've gone through all flashcards!");
+                document.getElementById('flashcardsContainer').style.display = 'none';
+            }
+        }
+    }
+
+    function showAnswer() {
+        const flashcard = document.getElementById('flashcard');
+        const flashcardInfo = document.getElementById('flashcardInfo');
+        const recallButtons = document.getElementById('recallButtons');
+        const showAnswerButton = document.getElementById('showAnswerButton');
+
+        flashcard.classList.add('flipped');
+        recallButtons.style.display = 'flex';
+        showAnswerButton.style.display = 'none'; // Hide the Show Answer button
+    }
+
+    function recordRecall(answer) {
+        console.log(`Flashcard ${currentCardIndex + 1}: ${answer}`);
+
+        // Store the flashcard in the recall queue based on the answer
+        if (answer === 'no') {
+            recallQueue.unshift(flashcards[currentCardIndex]); // Add to the front
+        } else if (answer === 'partially') {
+            recallQueue.splice(Math.floor(recallQueue.length / 2), 0, flashcards[currentCardIndex]); // Add to the middle
+        } else if (answer === 'yes') {
+            // No need to add to recall queue
+        }
+
+        currentCardIndex++;
+        showFlashcard();
+    }
+
+    function exitFlashcards() {
+        document.getElementById('flashcardsContainer').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>
