@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabular Input Web App</title>
+    <title>Mindcards</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -125,7 +125,7 @@
 <body>
 
 <div class="header">
-    <h1>Topics Relation Table</h1>
+    
 </div>
 
 <div class="button-container">
@@ -138,18 +138,18 @@
 <table>
     <thead>
         <tr>
-            <th>Topics</th>
+            <th>Point 1</th>
             <th>Relation</th>
-            <th>Information</th>
-            <th>Action</th> <!-- New column for delete action -->
+            <th>Point 2</th>
+            <th></th> <!-- New column for delete action -->
         </tr>
     </thead>
     <tbody id="tableBody">
         <tr>
-            <td><input type="text" placeholder="Enter Topic"></td>
+            <td><input type="text" placeholder="Enter Point"></td>
             <td><input type="text" placeholder="Enter Relation"></td>
-            <td><input type="text" placeholder="Enter Information"></td>
-            <td><button class="delete-button" onclick="deleteRow(this)">Delete</button></td> <!-- Delete button -->
+            <td><input type="text" placeholder="Enter Point"></td>
+            <td><button class="delete-button" onclick="deleteRow(this)">🗑️</button></td> <!-- Delete button -->
         </tr>
     </tbody>
 </table>
@@ -236,7 +236,8 @@
             flashcardRelation.innerText = card.relation;
             flashcardInfo.innerText = card.information;
 
-            flashcard.classList.remove('flipped');
+            flashcard.querySelector('.front').style.display = 'block';
+            flashcard.querySelector('.back').style.display = 'none';
             recallButtons.style.display = 'none';
             showAnswerButton.style.display = 'inline-block';
             document.getElementById('flashcardsContainer').style.display = 'flex';
@@ -256,11 +257,11 @@
 
     function showAnswer() {
         const flashcard = document.getElementById('flashcard');
-        const flashcardInfo = document.getElementById('flashcardInfo');
         const recallButtons = document.getElementById('recallButtons');
         const showAnswerButton = document.getElementById('showAnswerButton');
 
-        flashcard.classList.add('flipped');
+        flashcard.querySelector('.front').style.display = 'none';
+        flashcard.querySelector('.back').style.display = 'block';
         recallButtons.style.display = 'flex';
         showAnswerButton.style.display = 'none'; // Hide the Show Answer button
     }
