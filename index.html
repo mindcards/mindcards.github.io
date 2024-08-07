@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mindcards</title>
+    <title>Tabular Input Web App</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -56,6 +56,18 @@
             cursor: pointer;
         }
         button:hover {
+            background-color: #0056b3;
+        }
+        input[type="file"] {
+            margin-left: 10px;
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type="file"]:hover {
             background-color: #0056b3;
         }
         .flashcards {
@@ -113,12 +125,14 @@
 <body>
 
 <div class="header">
-    
+    <h1>Topics Relation Table</h1>
 </div>
 
 <div class="button-container">
-    <button onclick="addRow()">Add Card</button>
-    <button onclick="generateFlashcards()">Practice Cards</button>
+    <button onclick="addRow()">Add Row</button>
+    <button onclick="generateFlashcards()">Flashcards</button>
+    <button onclick="downloadFlashcards()">Download Flashcards</button> <!-- Download button -->
+    <input type="file" id="fileInput" accept=".html" onchange="importFlashcards(event)"> <!-- Import button -->
 </div>
 
 <table>
@@ -153,13 +167,11 @@
         </div>
     </div>
     <button id="showAnswerButton" onclick="showAnswer()">Show Answer</button>
-    
     <div class="recall-buttons" id="recallButtons">
         <button onclick="recordRecall('no')">No</button>
         <button onclick="recordRecall('partially')">Partially</button>
         <button onclick="recordRecall('yes')">Yes</button>
     </div>
-    <p>Did you recall your answer correctly?</p>
 </div>
 
 <script>
@@ -271,6 +283,107 @@
 
     function exitFlashcards() {
         document.getElementById('flashcardsContainer').style.display = 'none';
+    }
+
+    function downloadFlashcards() {
+        if (flashcards.length === 0) {
+            alert("No flashcards to download.");
+            return;
+        }
+
+        let htmlContent = `
+            <html>
+            <head>
+                <title>Flashcards</title>
+                <style>
+                    body { font-family: Arial, sans-serif; background-color: #f4f4f4; }
+                    .card { border: 1px solid #007BFF; border-radius: 8px; padding: 20px; margin: 10px; }
+                    .front { background-color: #007BFF; color: white; padding: 10px; border-radius: 8px; }
+                    .back { background-color: #333; color: white; padding: 10px; border-radius: 8px; }
+                </style>
+            </head>
+            <body>
+            <h1>Flashcards</h1>
+        `;
+
+        flashcards.forEach(card => {
+            htmlContent += `
+                <div class="card">
+                    <div class="front">
+                        <strong>${card.topic}</strong><br>
+                        <span>${card.relation}</span>
+                    </div>
+                    <div class="back">
+                        <strong>Information:</strong><br>
+                        <span>${card.information}</span>
+                    </div>
+                </div>
+            `;
+        });
+
+     
+
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'flashcards.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function importFlashcards(event) {
+        const file = event.target.files[0];
+        if (!file) {
+            alert("No file selected.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const content = e.target.result;
+            parseImportedHTML(content);
+        };
+        reader.readAsText(file);
+    }
+
+    function parseImportedHTML(content) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'text/html');
+
+        const importedFlashcards = [];
+        const cards = doc.querySelectorAll('.card');
+
+        cards.forEach(card => {
+            const topic = card.querySelector('.front strong').innerText;
+            const relation = card.querySelector('.front span').innerText;
+            const information = card.querySelector('.back span').innerText;
+
+            importedFlashcards.push({ topic, relation, information });
+        });
+
+        // Add imported flashcards to the existing list
+        importedFlashcards.forEach(card => {
+            addRowWithData(card.topic, card.relation, card.information);
+        });
+
+        alert(`${importedFlashcards.length} flashcards imported successfully.`);
+    }
+
+    function addRowWithData(topic, relation, information) {
+        const tableBody = document.getElementById('tableBody');
+        const newRow = document.createElement('tr');
+
+        newRow.innerHTML = `
+            <td><input type="text" value="${topic}" placeholder="Enter Topic"></td>
+            <td><input type="text" value="${relation}" placeholder="Enter Relation"></td>
+            <td><input type="text" value="${information}" placeholder="Enter Information"></td>
+            <td><button class="delete-button" onclick="deleteRow(this)">Delete</button></td>
+        `;
+
+        tableBody.appendChild(newRow);
     }
 </script>
 
