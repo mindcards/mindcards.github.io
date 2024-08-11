@@ -120,10 +120,10 @@
         .delete-button:hover {
             background-color: #c82333;
         }
-        .add-button {
+        .add-row-button {
             background-color: #28a745; /* Bootstrap success color */
         }
-        .add-button:hover {
+        .add-row-button:hover {
             background-color: #218838;
         }
     </style>
@@ -148,18 +148,18 @@
             <th>Point 1</th>
             <th>Relation</th>
             <th>Point 2</th>
-            <th>Actions</th> <!-- New column for actions -->
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody id="tableBody">
         <tr>
-            <td><input type="text" placeholder="Enter Point"></td>
+            <td><input type="text" placeholder="Enter Main Point"></td>
             <td><input type="text" placeholder="Enter Relation"></td>
-            <td><input type="text" placeholder="Enter Point"></td>
+            <td><input type="text" placeholder="Enter Related Point"></td>
             <td>
+                <button class="add-row-button" onclick="addRowBelow(this)">➕</button>
                 <button class="delete-button" onclick="deleteRow(this)">🗑️</button>
-                <button class="add-button" onclick="addBlankRowBelow(this)">➕</button>
-            </td> <!-- Actions column -->
+            </td>
         </tr>
     </tbody>
 </table>
@@ -183,10 +183,7 @@
         <button onclick="recordRecall('yes')">Yes</button>
     </div>
 </div>
-<div class="Announcements">
-    <h1>Please read before using:</h1>
-    <p>Open and then close the flashcards section before downloading the cards.</p>
-</div>
+
 <script>
     let flashcards = [];
     let currentCardIndex = 0;
@@ -197,39 +194,39 @@
         const newRow = document.createElement('tr');
 
         newRow.innerHTML = `
-            <td><input type="text" placeholder="Enter Point"></td>
+            <td><input type="text" placeholder="Enter Main Point"></td>
             <td><input type="text" placeholder="Enter Relation"></td>
-            <td><input type="text" placeholder="Enter Point"></td>
+            <td><input type="text" placeholder="Enter Related Point"></td>
             <td>
+                <button class="add-row-button" onclick="addRowBelow(this)">➕</button>
                 <button class="delete-button" onclick="deleteRow(this)">🗑️</button>
-                <button class="add-button" onclick="addBlankRowBelow(this)">➕</button>
             </td>
         `;
 
         tableBody.appendChild(newRow);
     }
 
-    function deleteRow(button) {
-        const row = button.parentElement.parentElement; // Get the row of the button
-        row.parentElement.removeChild(row); // Remove the row from the table
-    }
-
-    function addBlankRowBelow(button) {
-        const row = button.parentElement.parentElement; // Get the row of the button
+    function addRowBelow(button) {
+        const row = button.parentElement.parentElement;
         const tableBody = document.getElementById('tableBody');
         const newRow = document.createElement('tr');
 
         newRow.innerHTML = `
-            <td><input type="text" placeholder="Enter Point"></td>
+            <td><input type="text" placeholder="Enter Main Point"></td>
             <td><input type="text" placeholder="Enter Relation"></td>
-            <td><input type="text" placeholder="Enter Point"></td>
+            <td><input type="text" placeholder="Enter Related Point"></td>
             <td>
+                <button class="add-row-button" onclick="addRowBelow(this)">➕</button>
                 <button class="delete-button" onclick="deleteRow(this)">🗑️</button>
-                <button class="add-button" onclick="addBlankRowBelow(this)">➕</button>
             </td>
         `;
 
-        tableBody.insertBefore(newRow, row.nextSibling); // Insert new row after the current row
+        tableBody.insertBefore(newRow, row.nextSibling);
+    }
+
+    function deleteRow(button) {
+        const row = button.parentElement.parentElement;
+        row.parentElement.removeChild(row);
     }
 
     function addRowsWithText() {
@@ -239,14 +236,12 @@
             const tableBody = document.getElementById('tableBody');
             
             for (let i = 0; i < words.length - 1; i++) {
-                // Create rows for each adjacent pair
                 const point1 = words[i];
                 const point2 = words[i + 1];
                 addRowWithData(point1, '', point2);
             }
             
-            // Clear input after adding rows
-            document.getElementById('textInput').value = ''; 
+            document.getElementById('textInput').value = ''; // Clear input
         } else {
             alert("Please enter some text.");
         }
@@ -257,13 +252,12 @@
         const newRow = document.createElement('tr');
 
         newRow.innerHTML = `
-            <td><input type="text" value="${topic}" placeholder="Enter Point"></td>
+            <td><input type="text" value="${topic}" placeholder="Enter Main Point"></td>
             <td><input type="text" value="${relation}" placeholder="Enter Relation"></td>
-            <td><input type="text" value="${information}" placeholder="Enter Point"></td>
+            <td><input type="text" value="${information}" placeholder="Enter Related Point"></td>
             <td>
-                <button class="delete-button" onclick="deleteRow(this)">🗑️</button>
-                <button class="add-button" onclick="addBlankRowBelow(this)">➕</button>
-            </td>
+                <button class="add-row-button" onclick="addRowBelow(this)">➕</button>
+                <button class="delete-button" onclick="deleteRow(this)">🗑️</button>             </td>
         `;
 
         tableBody.appendChild(newRow);
@@ -343,14 +337,21 @@
         document.getElementById('flashcardsContainer').style.display = 'none';
     }
 
-    // Function to convert flashcards to CSV and download
     function downloadCSV() {
         let csvContent = "data:text/csv;charset=utf-8,";
         csvContent += "Point 1,Relation,Point 2\n";
 
-        flashcards.forEach(card => {
-            csvContent += `${card.topic},${card.relation},${card.information}\n`;
-        });
+        const tableBody = document.getElementById('tableBody');
+        const rows = tableBody.getElementsByTagName('tr');
+        for (let row of rows) {
+            const point1 = row.cells[0].querySelector('input').value;
+            const relation = row.cells[1].querySelector('input').value;
+            const point2 = row.cells[2].querySelector('input').value;
+
+            if (point1 || relation || point2) { // Only add rows with at least one non-empty field
+                csvContent += `${point1},${relation},${point2}\n`;
+            }
+        }
 
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
@@ -361,7 +362,6 @@
         document.body.removeChild(link);
     }
 
-    // Function to parse CSV and import flashcards
     function importCSV() {
         const fileInput = document.getElementById('importFile');
         const file = fileInput.files[0];
