@@ -120,19 +120,26 @@
         .delete-button:hover {
             background-color: #c82333;
         }
+        .add-button {
+            background-color: #28a745; /* Bootstrap success color */
+        }
+        .add-button:hover {
+            background-color: #218838;
+        }
     </style>
 </head>
 <body>
 
 <div class="header">
-    
+    <h1>Mindcards</h1>
 </div>
 
 <div class="button-container">
-    <button onclick="addRow()">Add Row</button>
+    <input type="text" id="textInput" placeholder="Enter text to split and add to rows">
+    <button onclick="addRowsWithText()">Add Rows</button>
     <button onclick="generateFlashcards()">Flashcards</button>
-    <button onclick="downloadFlashcards()">Download Flashcards</button> <!-- Download button -->
-    <input type="file" id="fileInput" accept=".html" onchange="importFlashcards(event)"> <!-- Import button -->
+    <button onclick="downloadCSV()">Download CSV</button>
+    <input type="file" id="importFile" accept=".csv" onchange="importCSV()">
 </div>
 
 <table>
@@ -141,7 +148,7 @@
             <th>Point 1</th>
             <th>Relation</th>
             <th>Point 2</th>
-            <th></th> <!-- New column for delete action -->
+            <th>Actions</th> <!-- New column for actions -->
         </tr>
     </thead>
     <tbody id="tableBody">
@@ -149,7 +156,10 @@
             <td><input type="text" placeholder="Enter Point"></td>
             <td><input type="text" placeholder="Enter Relation"></td>
             <td><input type="text" placeholder="Enter Point"></td>
-            <td><button class="delete-button" onclick="deleteRow(this)">🗑️</button></td> <!-- Delete button -->
+            <td>
+                <button class="delete-button" onclick="deleteRow(this)">🗑️</button>
+                <button class="add-button" onclick="addBlankRowBelow(this)">➕</button>
+            </td> <!-- Actions column -->
         </tr>
     </tbody>
 </table>
@@ -173,7 +183,10 @@
         <button onclick="recordRecall('yes')">Yes</button>
     </div>
 </div>
-
+<div class="Announcements">
+    <h1>Please read before using:</h1>
+    <p>Open and then close the flashcards section before downloading the cards.</p>
+</div>
 <script>
     let flashcards = [];
     let currentCardIndex = 0;
@@ -184,10 +197,13 @@
         const newRow = document.createElement('tr');
 
         newRow.innerHTML = `
-            <td><input type="text" placeholder="Enter Topic"></td>
+            <td><input type="text" placeholder="Enter Point"></td>
             <td><input type="text" placeholder="Enter Relation"></td>
-            <td><input type="text" placeholder="Enter Information"></td>
-            <td><button class="delete-button" onclick="deleteRow(this)">Delete</button></td>
+            <td><input type="text" placeholder="Enter Point"></td>
+            <td>
+                <button class="delete-button" onclick="deleteRow(this)">🗑️</button>
+                <button class="add-button" onclick="addBlankRowBelow(this)">➕</button>
+            </td>
         `;
 
         tableBody.appendChild(newRow);
@@ -196,6 +212,61 @@
     function deleteRow(button) {
         const row = button.parentElement.parentElement; // Get the row of the button
         row.parentElement.removeChild(row); // Remove the row from the table
+    }
+
+    function addBlankRowBelow(button) {
+        const row = button.parentElement.parentElement; // Get the row of the button
+        const tableBody = document.getElementById('tableBody');
+        const newRow = document.createElement('tr');
+
+        newRow.innerHTML = `
+            <td><input type="text" placeholder="Enter Point"></td>
+            <td><input type="text" placeholder="Enter Relation"></td>
+            <td><input type="text" placeholder="Enter Point"></td>
+            <td>
+                <button class="delete-button" onclick="deleteRow(this)">🗑️</button>
+                <button class="add-button" onclick="addBlankRowBelow(this)">➕</button>
+            </td>
+        `;
+
+        tableBody.insertBefore(newRow, row.nextSibling); // Insert new row after the current row
+    }
+
+    function addRowsWithText() {
+        const textInput = document.getElementById('textInput').value.trim();
+        if (textInput) {
+            const words = textInput.split(/\s+/); // Split text into words
+            const tableBody = document.getElementById('tableBody');
+            
+            for (let i = 0; i < words.length - 1; i++) {
+                // Create rows for each adjacent pair
+                const point1 = words[i];
+                const point2 = words[i + 1];
+                addRowWithData(point1, '', point2);
+            }
+            
+            // Clear input after adding rows
+            document.getElementById('textInput').value = ''; 
+        } else {
+            alert("Please enter some text.");
+        }
+    }
+
+    function addRowWithData(topic, relation, information) {
+        const tableBody = document.getElementById('tableBody');
+        const newRow = document.createElement('tr');
+
+        newRow.innerHTML = `
+            <td><input type="text" value="${topic}" placeholder="Enter Point"></td>
+            <td><input type="text" value="${relation}" placeholder="Enter Relation"></td>
+            <td><input type="text" value="${information}" placeholder="Enter Point"></td>
+            <td>
+                <button class="delete-button" onclick="deleteRow(this)">🗑️</button>
+                <button class="add-button" onclick="addBlankRowBelow(this)">➕</button>
+            </td>
+        `;
+
+        tableBody.appendChild(newRow);
     }
 
     function generateFlashcards() {
@@ -227,165 +298,94 @@
         const flashcardTopic = document.getElementById('flashcardTopic');
         const flashcardRelation = document.getElementById('flashcardRelation');
         const flashcardInfo = document.getElementById('flashcardInfo');
-        const recallButtons = document.getElementById('recallButtons');
+        const flashcardsContainer = document.getElementById('flashcardsContainer');
         const showAnswerButton = document.getElementById('showAnswerButton');
+        const recallButtons = document.getElementById('recallButtons');
 
-        if (currentCardIndex < flashcards.length) {
-            const card = flashcards[currentCardIndex];
-            flashcardTopic.innerText = card.topic;
-            flashcardRelation.innerText = card.relation;
-            flashcardInfo.innerText = card.information;
+        const { topic, relation, information } = flashcards[currentCardIndex];
+        flashcardTopic.textContent = topic;
+        flashcardRelation.textContent = relation;
+        flashcardInfo.textContent = information;
 
-            flashcard.querySelector('.front').style.display = 'block';
-            flashcard.querySelector('.back').style.display = 'none';
-            recallButtons.style.display = 'none';
-            showAnswerButton.style.display = 'inline-block';
-            document.getElementById('flashcardsContainer').style.display = 'flex';
-        } else {
-            // After viewing all flashcards, process recall queue
-            if (recallQueue.length > 0) {
-                currentCardIndex = 0; // Reset index for the recall queue
-                flashcards = recallQueue; // Use recall queue for the next round
-                recallQueue = []; // Clear the recall queue
-                showFlashcard();
-            } else {
-                alert("You've gone through all flashcards!");
-                document.getElementById('flashcardsContainer').style.display = 'none';
-            }
-        }
+        flashcard.querySelector('.front').style.display = 'block';
+        flashcard.querySelector('.back').style.display = 'none';
+
+        showAnswerButton.style.display = 'block';
+        recallButtons.style.display = 'none';
+        flashcardsContainer.style.display = 'flex';
     }
 
     function showAnswer() {
         const flashcard = document.getElementById('flashcard');
-        const recallButtons = document.getElementById('recallButtons');
         const showAnswerButton = document.getElementById('showAnswerButton');
+        const recallButtons = document.getElementById('recallButtons');
 
         flashcard.querySelector('.front').style.display = 'none';
         flashcard.querySelector('.back').style.display = 'block';
-        recallButtons.style.display = 'flex';
-        showAnswerButton.style.display = 'none'; // Hide the Show Answer button
+
+        showAnswerButton.style.display = 'none';
+        recallButtons.style.display = 'block';
     }
 
-    function recordRecall(answer) {
-        console.log(`Flashcard ${currentCardIndex + 1}: ${answer}`);
-
-        // Store the flashcard in the recall queue based on the answer
-        if (answer === 'no') {
-            recallQueue.unshift(flashcards[currentCardIndex]); // Add to the front
-        } else if (answer === 'partially') {
-            recallQueue.splice(Math.floor(recallQueue.length / 2), 0, flashcards[currentCardIndex]); // Add to the middle
-        } else if (answer === 'yes') {
-            // No need to add to recall queue
-        }
+    function recordRecall(recallLevel) {
+        recallQueue.push({ ...flashcards[currentCardIndex], recallLevel });
 
         currentCardIndex++;
-        showFlashcard();
+        if (currentCardIndex < flashcards.length) {
+            showFlashcard();
+        } else {
+            alert("You've gone through all the flashcards!");
+            exitFlashcards();
+        }
     }
 
     function exitFlashcards() {
         document.getElementById('flashcardsContainer').style.display = 'none';
     }
 
-    function downloadFlashcards() {
-        if (flashcards.length === 0) {
-            alert("No flashcards to download.");
-            return;
-        }
-
-        let htmlContent = `
-            <html>
-            <head>
-                <title>Flashcards</title>
-                <style>
-                    body { font-family: Arial, sans-serif; background-color: #f4f4f4; }
-                    .card { border: 1px solid #007BFF; border-radius: 8px; padding: 20px; margin: 10px; }
-                    .front { background-color: #007BFF; color: white; padding: 10px; border-radius: 8px; }
-                    .back { background-color: #333; color: white; padding: 10px; border-radius: 8px; }
-                </style>
-            </head>
-            <body>
-            <h1>Flashcards</h1>
-        `;
+    // Function to convert flashcards to CSV and download
+    function downloadCSV() {
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Point 1,Relation,Point 2\n";
 
         flashcards.forEach(card => {
-            htmlContent += `
-                <div class="card">
-                    <div class="front">
-                        <strong>${card.topic}</strong><br>
-                        <span>${card.relation}</span>
-                    </div>
-                    <div class="back">
-                        <strong>Information:</strong><br>
-                        <span>${card.information}</span>
-                    </div>
-                </div>
-            `;
+            csvContent += `${card.topic},${card.relation},${card.information}\n`;
         });
 
-     
-
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'flashcards.html';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "flashcards.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
-    function importFlashcards(event) {
-        const file = event.target.files[0];
+    // Function to parse CSV and import flashcards
+    function importCSV() {
+        const fileInput = document.getElementById('importFile');
+        const file = fileInput.files[0];
         if (!file) {
-            alert("No file selected.");
+            alert("Please select a CSV file.");
             return;
         }
 
         const reader = new FileReader();
-        reader.onload = function(e) {
-            const content = e.target.result;
-            parseImportedHTML(content);
+        reader.onload = function(event) {
+            const text = event.target.result;
+            const rows = text.split("\n").slice(1); // Skip the header row
+
+            rows.forEach(row => {
+                const [topic, relation, information] = row.split(",");
+                if (topic && information) { // Only add rows with valid data
+                    addRowWithData(topic, relation, information);
+                }
+            });
         };
+
         reader.readAsText(file);
     }
 
-    function parseImportedHTML(content) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(content, 'text/html');
-
-        const importedFlashcards = [];
-        const cards = doc.querySelectorAll('.card');
-
-        cards.forEach(card => {
-            const topic = card.querySelector('.front strong').innerText;
-            const relation = card.querySelector('.front span').innerText;
-            const information = card.querySelector('.back span').innerText;
-
-            importedFlashcards.push({ topic, relation, information });
-        });
-
-        // Add imported flashcards to the existing list
-        importedFlashcards.forEach(card => {
-            addRowWithData(card.topic, card.relation, card.information);
-        });
-
-        alert(`${importedFlashcards.length} flashcards imported successfully.`);
-    }
-
-    function addRowWithData(topic, relation, information) {
-        const tableBody = document.getElementById('tableBody');
-        const newRow = document.createElement('tr');
-
-        newRow.innerHTML = `
-            <td><input type="text" value="${topic}" placeholder="Enter Topic"></td>
-            <td><input type="text" value="${relation}" placeholder="Enter Relation"></td>
-            <td><input type="text" value="${information}" placeholder="Enter Information"></td>
-            <td><button class="delete-button" onclick="deleteRow(this)">Delete</button></td>
-        `;
-
-        tableBody.appendChild(newRow);
-    }
 </script>
 
 </body>
