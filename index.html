@@ -135,8 +135,8 @@
 </div>
 
 <div class="button-container">
-    <input type="text" id="textInput" placeholder="Enter text to split and add to rows">
-    <button onclick="addRowsWithText()">Add Rows</button>
+    <input type="text" id="textInput" placeholder="Enter text to automatically create cards.">
+    <button onclick="addRowsWithText()">Add Cards</button>
     <button onclick="generateFlashcards()">Flashcards</button>
     <button onclick="downloadCSV()">Download CSV</button>
     <input type="file" id="importFile" accept=".csv" onchange="importCSV()">
@@ -145,17 +145,17 @@
 <table>
     <thead>
         <tr>
-            <th>Point 1</th>
-            <th>Relation</th>
-            <th>Point 2</th>
+            <th>Topic</th>
+            <th>Question</th>
+            <th>Answer</th>
             <th>Actions</th>
         </tr>
     </thead>
     <tbody id="tableBody">
         <tr>
-            <td><input type="text" placeholder="Enter Main Point"></td>
-            <td><input type="text" placeholder="Enter Relation"></td>
-            <td><input type="text" placeholder="Enter Related Point"></td>
+            <td><input type="text" placeholder="Enter Topic"></td>
+            <td><input type="text" placeholder="Enter Question"></td>
+            <td><input type="text" placeholder="Enter Answer"></td>
             <td>
                 <button class="add-row-button" onclick="addRowBelow(this)">➕</button>
                 <button class="delete-button" onclick="deleteRow(this)">🗑️</button>
@@ -172,7 +172,7 @@
             <span id="flashcardRelation"></span>
         </div>
         <div class="back">
-            <strong>Information:</strong><br>
+            
             <span id="flashcardInfo"></span>
         </div>
     </div>
@@ -212,9 +212,9 @@
         const newRow = document.createElement('tr');
 
         newRow.innerHTML = `
-            <td><input type="text" placeholder="Enter Main Point"></td>
-            <td><input type="text" placeholder="Enter Relation"></td>
-            <td><input type="text" placeholder="Enter Related Point"></td>
+            <td><input type="text" placeholder="Enter Topic"></td>
+            <td><input type="text" placeholder="Enter Question"></td>
+            <td><input type="text" placeholder="Enter Answer"></td>
             <td>
                 <button class="add-row-button" onclick="addRowBelow(this)">➕</button>
                 <button class="delete-button" onclick="deleteRow(this)">🗑️</button>
@@ -230,31 +230,33 @@
     }
 
     function addRowsWithText() {
-        const textInput = document.getElementById('textInput').value.trim();
-        if (textInput) {
-            const words = textInput.split(/\s+/); // Split text into words
-            const tableBody = document.getElementById('tableBody');
-            
-            for (let i = 0; i < words.length - 1; i++) {
-                const point1 = words[i];
-                const point2 = words[i + 1];
-                addRowWithData(point1, '', point2);
-            }
-            
-            document.getElementById('textInput').value = ''; // Clear input
-        } else {
-            alert("Please enter some text.");
+    const textInput = document.getElementById('textInput').value.trim();
+    if (textInput) {
+        // Split text into sentences, but include the last part even if it doesn't end with a punctuation mark
+        const sentences = textInput.match(/[^\.!\?]+[\.!\?]*/g);
+        const tableBody = document.getElementById('tableBody');
+
+        if (sentences) {
+            sentences.forEach(sentence => {
+                addRowWithData("", "", sentence.trim());
+            });
         }
+
+        document.getElementById('textInput').value = ''; // Clear input
+    } else {
+        alert("Please enter some text.");
     }
+}
+
 
     function addRowWithData(topic, relation, information) {
         const tableBody = document.getElementById('tableBody');
         const newRow = document.createElement('tr');
 
         newRow.innerHTML = `
-            <td><input type="text" value="${topic}" placeholder="Enter Main Point"></td>
-            <td><input type="text" value="${relation}" placeholder="Enter Relation"></td>
-            <td><input type="text" value="${information}" placeholder="Enter Related Point"></td>
+            <td><input type="text" value="${topic}" placeholder="Enter Topic"></td>
+            <td><input type="text" value="${relation}" placeholder="Enter Question"></td>
+            <td><input type="text" value="${information}" placeholder="Enter Answer"></td>
             <td>
                 <button class="add-row-button" onclick="addRowBelow(this)">➕</button>
                 <button class="delete-button" onclick="deleteRow(this)">🗑️</button>             </td>
@@ -264,50 +266,51 @@
     }
 
     function generateFlashcards() {
-        const tableBody = document.getElementById('tableBody');
-        flashcards = []; // Clear previous flashcards
+    const tableBody = document.getElementById('tableBody');
+    flashcards = []; // Clear previous flashcards
 
-        const rows = tableBody.getElementsByTagName('tr');
-        for (let row of rows) {
-            const topic = row.cells[0].querySelector('input').value;
-            const relation = row.cells[1].querySelector('input').value;
-            const information = row.cells[2].querySelector('input').value;
+    const rows = tableBody.getElementsByTagName('tr');
+    for (let row of rows) {
+        const topic = row.cells[0].querySelector('input').value;
+        const question = row.cells[1].querySelector('input').value;
+        const answer = row.cells[2].querySelector('input').value;
 
-            if (topic && information) { // Only create flashcards for filled topics
-                flashcards.push({ topic, relation, information });
-            }
-        }
-
-        if (flashcards.length > 0) {
-            currentCardIndex = 0;
-            recallQueue = []; // Reset recall queue
-            showFlashcard();
-        } else {
-            alert("Please enter at least one topic and information.");
+        if (question && answer) { // Only create flashcards if both Question and Answer are filled
+            flashcards.push({ topic, question, answer });
         }
     }
 
-    function showFlashcard() {
-        const flashcard = document.getElementById('flashcard');
-        const flashcardTopic = document.getElementById('flashcardTopic');
-        const flashcardRelation = document.getElementById('flashcardRelation');
-        const flashcardInfo = document.getElementById('flashcardInfo');
-        const flashcardsContainer = document.getElementById('flashcardsContainer');
-        const showAnswerButton = document.getElementById('showAnswerButton');
-        const recallButtons = document.getElementById('recallButtons');
-
-        const { topic, relation, information } = flashcards[currentCardIndex];
-        flashcardTopic.textContent = topic;
-        flashcardRelation.textContent = relation;
-        flashcardInfo.textContent = information;
-
-        flashcard.querySelector('.front').style.display = 'block';
-        flashcard.querySelector('.back').style.display = 'none';
-
-        showAnswerButton.style.display = 'block';
-        recallButtons.style.display = 'none';
-        flashcardsContainer.style.display = 'flex';
+    if (flashcards.length > 0) {
+        currentCardIndex = 0;
+        recallQueue = []; // Reset recall queue
+        showFlashcard();
+    } else {
+        alert("Please make at least one card with both a Question and an Answer.");
     }
+}
+
+function showFlashcard() {
+    const flashcard = document.getElementById('flashcard');
+    const flashcardTopic = document.getElementById('flashcardTopic');
+    const flashcardRelation = document.getElementById('flashcardRelation');
+    const flashcardInfo = document.getElementById('flashcardInfo');
+    const flashcardsContainer = document.getElementById('flashcardsContainer');
+    const showAnswerButton = document.getElementById('showAnswerButton');
+    const recallButtons = document.getElementById('recallButtons');
+
+    const { topic, question, answer } = flashcards[currentCardIndex];
+    flashcardTopic.textContent = topic;
+    flashcardRelation.textContent = question;
+    flashcardInfo.textContent = answer;
+
+    flashcard.querySelector('.front').style.display = 'block';
+    flashcard.querySelector('.back').style.display = 'none';
+
+    showAnswerButton.style.display = 'block';
+    recallButtons.style.display = 'none';
+    flashcardsContainer.style.display = 'flex';
+}
+
 
     function showAnswer() {
         const flashcard = document.getElementById('flashcard');
@@ -328,7 +331,7 @@
         if (currentCardIndex < flashcards.length) {
             showFlashcard();
         } else {
-            alert("You've gone through all the flashcards!");
+            alert("You've gone through all the cards!");
             exitFlashcards();
         }
     }
