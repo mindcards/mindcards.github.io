@@ -120,10 +120,10 @@
         .delete-button:hover {
             background-color: #c82333;
         }
-        .add-row-button {
+        .add-card-button {
             background-color: #28a745;
         }
-        .add-row-button:hover {
+        .add-card-button:hover {
             background-color: #218838;
         }
     </style>
@@ -135,31 +135,28 @@
 </div>
 
 <div class="button-container">
-    <input type="text" id="textInput" placeholder="Enter text to automatically create cards.">
-    <button onclick="addRowsWithText()">Add Cards</button>
-    <button onclick="generateFlashcards()">Flashcards</button>
-    <button onclick="downloadCSV()">Download CSV</button>
+    <input type="text" id="textInput" placeholder="Enter text to automatically create mindcards.">
+    <button onclick="addCardsWithText()">Add Mindcards</button>
+    <button onclick="generateFlashcards()">Practice</button>
+    <button onclick="downloadCSV()">Download</button>
     <input type="file" id="importFile" accept=".csv" onchange="importCSV()">
-    
 </div>
 
 <table>
     <thead>
         <tr>
             <th>Topic</th>
-            <th>Question</th>
-            <th>Answer</th>
+            <th>Information</th>
             <th>Actions</th>
         </tr>
     </thead>
     <tbody id="tableBody">
         <tr>
             <td><input type="text" placeholder="Enter Topic"></td>
-            <td><input type="text" placeholder="Enter Question"></td>
-            <td><input type="text" placeholder="Enter Answer"></td>
+            <td><input type="text" placeholder="Enter Information"></td>
             <td>
-                <button class="add-row-button" onclick="addRowBelow(this, true)">➕</button>
-                <button class="delete-button" onclick="deleteRow(this)">🗑️</button>
+                <button class="add-card-button" onclick="addCardBelow(this, true)" style="font-size: 24px; font-weight: bold;">+</button>
+                <button class="delete-button" onclick="deleteCard(this)">🗑️</button>
             </td>
         </tr>
     </tbody>
@@ -187,59 +184,74 @@
     let flashcards = [];
     let currentCardIndex = 0;
     let recallQueue = [];
-    let frontAsTopicQuestion = true;
+    let frontAsTopic = true;
 
-    function addRowBelow(button, copyContents = false) {
-        const row = button.parentElement.parentElement;
-        const newRow = document.createElement('tr');
+    function addCardBelow(button, copyContents = false) {
+        const card = button.parentElement.parentElement;
+        const newCard = document.createElement('tr');
 
-        newRow.innerHTML = `
+        newCard.innerHTML = `
             <td><input type="text" placeholder="Enter Topic"></td>
-            <td><input type="text" placeholder="Enter Question"></td>
-            <td><input type="text" placeholder="Enter Answer"></td>
+            <td><input type="text" placeholder="Enter Information"></td>
             <td>
-                <button class="add-row-button" onclick="addRowBelow(this, true)">➕</button>
-                <button class="delete-button" onclick="deleteRow(this)">🗑️</button>
+                <button class="add-card-button" onclick="addCardBelow(this, true)" style="font-size: 24px; font-weight: bold;">+</button>
+                <button class="delete-button" onclick="deleteCard(this)">🗑️</button>
             </td>
         `;
 
         if (copyContents) {
-            const cells = row.querySelectorAll('input[type="text"]');
-            const newCells = newRow.querySelectorAll('input[type="text"]');
+            const cells = card.querySelectorAll('input[type="text"]');
+            const newCells = newCard.querySelectorAll('input[type="text"]');
             cells.forEach((cell, index) => {
                 newCells[index].value = cell.value;
             });
         }
 
-        row.parentElement.insertBefore(newRow, row.nextSibling);
+        card.parentElement.insertBefore(newCard, card.nextSibling);
     }
 
-    function deleteRow(button) {
-        const row = button.parentElement.parentElement;
-        row.remove();
+    function deleteCard(button) {
+        const card = button.parentElement.parentElement;
+        card.remove();
     }
 
-    function addRowsWithText() {
-        const textInput = document.getElementById('textInput').value.trim();
+    function addCardsWithText() {
+        let textInput = document.getElementById('textInput').value.trim();
+
+        // Remove all symbols except the full stop
+        textInput = textInput.replace(/[^a-zA-Z0-9\s.]/g, '');
+
         if (textInput) {
-            const sentences = textInput.match(/[^\.!\?]+[\.!\?]*/g);
+            const sentences = textInput.match(/[^.!?]+[.!?]*/g); // Split input into sentences
             const tableBody = document.getElementById('tableBody');
 
-            if (sentences) {
-                sentences.forEach(sentence => {
-                    const newRow = document.createElement('tr');
-                    newRow.innerHTML = `
-                        <td><input type="text" placeholder="Enter Topic"></td>
-                        <td><input type="text"  placeholder="Enter Question"></td>
-                        <td><input type="text" value="${sentence.trim()}" placeholder="Enter Answer"></td>
+            const skipWords = ['Of', 'The', 'In', 'On', 'At', 'By', 'To', 'With', 'For', 'Is', 'Are', 'Was', 'Were', 'Be', 'Been', 'Am', 'A', 'An']; // Common articles, prepositions, and verbs
+
+            sentences.forEach(sentence => {
+                const words = sentence.trim().split(' ');
+                let capitalizedWords = [];
+
+                // Collect all capitalized words, excluding the first word of the line
+                capitalizedWords = words.slice(1).filter(word => word[0] === word[0].toUpperCase());
+
+                // Filter out any words that are in the skipWords list
+                capitalizedWords = capitalizedWords.filter(word => !skipWords.includes(word));
+
+                // Ensure only the third valid capitalized word (after excluding the first word) is used as the topic
+                if (capitalizedWords.length >= 3) {
+                    const topic = capitalizedWords[0]; // Select the third valid capitalized word as the topic
+                    const newCard = document.createElement('tr');
+                    newCard.innerHTML = `
+                        <td><input type="text" value="${topic.trim()}" placeholder="Enter Topic"></td>
+                        <td><input type="text" value="${sentence.trim()}" placeholder="Enter Information"></td>
                         <td>
-                            <button class="add-row-button" onclick="addRowBelow(this, true)">➕</button>
-                            <button class="delete-button" onclick="deleteRow(this)">🗑️</button>
+                            <button class="add-card-button" onclick="addCardBelow(this, true)" style="font-size: 24px; font-weight: bold;">+</button>
+                            <button class="delete-button" onclick="deleteCard(this)">🗑️</button>
                         </td>
                     `;
-                    tableBody.appendChild(newRow);
-                });
-            }
+                    tableBody.appendChild(newCard);
+                }
+            });
 
             document.getElementById('textInput').value = ''; // Clear input
         } else {
@@ -249,73 +261,50 @@
 
     function generateFlashcards() {
         flashcards = [];
-        const rows = document.querySelectorAll('#tableBody tr');
+        const cards = document.querySelectorAll('#tableBody tr');
 
-        rows.forEach(row => {
-            const topicInput = row.querySelector('input[placeholder="Enter Topic"]');
-            const questionInput = row.querySelector('input[placeholder="Enter Question"]');
-            const answerInput = row.querySelector('input[placeholder="Enter Answer"]');
-            const topic = topicInput.value.trim();
-            const question = questionInput.value.trim();
-            const answer = answerInput.value.trim();
-
-            if (topic && question && answer) {
-                flashcards.push({ topic, question, answer });
+        cards.forEach(card => {
+            const topic = card.querySelector('input[placeholder="Enter Topic"]').value.trim();
+            const information = card.querySelector('input[placeholder="Enter Information"]').value.trim();
+            if (topic && information) {
+                flashcards.push({ topic, information });
             }
         });
 
         if (flashcards.length > 0) {
-            frontAsTopicQuestion = true;
-            recallQueue = [...flashcards];
             currentCardIndex = 0;
-            showFlashcard();
             document.getElementById('flashcardsContainer').style.display = 'flex';
+            displayCard();
         } else {
-            alert("Please fill in the Topic, Question, and Answer for at least one card.");
+            alert("No cards available.");
         }
     }
 
-    function showFlashcard() {
-        const flashcard = recallQueue[currentCardIndex];
-        const front = document.getElementById('flashcardFront');
-        const back = document.getElementById('flashcardBack');
-
-        if (frontAsTopicQuestion) {
-            front.textContent = `Topic: ${flashcard.topic}\n \nQuestion: ${flashcard.question}`;
-            back.textContent = flashcard.answer;
+    function displayCard() {
+        const card = flashcards[currentCardIndex];
+        if (frontAsTopic) {
+            document.getElementById('flashcardFront').innerText = card.topic;
+            document.getElementById('flashcardBack').innerText = card.information;
         } else {
-            front.textContent = `Guess the Topic and Question for: ${flashcard.answer}`;
-            back.textContent = `Topic: ${flashcard.topic}\n \nQuestion: ${flashcard.question}`;
+            document.getElementById('flashcardFront').innerText = card.information;
+            document.getElementById('flashcardBack').innerText = card.topic;
         }
-
-        document.querySelector('.card .front').style.display = 'block';
-        document.querySelector('.card .back').style.display = 'none';
-        document.getElementById('showAnswerButton').style.display = 'block';
-        document.getElementById('recallButtons').style.display = 'none';
     }
 
     function showAnswer() {
-        document.querySelector('.card .front').style.display = 'none';
-        document.querySelector('.card .back').style.display = 'block';
-        document.getElementById('showAnswerButton').style.display = 'none';
-        document.getElementById('recallButtons').style.display = 'block';
+        document.getElementById('flashcard').classList.toggle('showAnswer');
+        document.getElementById('showAnswerButton').innerText = document.getElementById('flashcard').classList.contains('showAnswer') ? 'Hide Answer' : 'Show Answer';
+        document.getElementById('recallButtons').style.display = document.getElementById('flashcard').classList.contains('showAnswer') ? 'block' : 'none';
     }
 
-    function recordRecall(recall) {
+    function recordRecall(type) {
+        recallQueue.push(type);
         currentCardIndex++;
-
-        if (currentCardIndex < recallQueue.length) {
-            showFlashcard();
+        if (currentCardIndex < flashcards.length) {
+            displayCard();
         } else {
-            if (frontAsTopicQuestion) {
-                frontAsTopicQuestion = false;
-                recallQueue = [...flashcards];
-                currentCardIndex = 0;
-                showFlashcard();
-            } else {
-                alert('You have completed all flashcards!');
-                exitFlashcards();
-            }
+            alert("You've finished the flashcards. Your recall data is saved.");
+            exitFlashcards();
         }
     }
 
@@ -324,78 +313,55 @@
     }
 
     function downloadCSV() {
-    const rows = document.querySelectorAll('#tableBody tr');
-    const csv = [];
+        let csvContent = "data:text/csv;charset=utf-8,";
+        const cards = document.querySelectorAll('#tableBody tr');
 
-    rows.forEach(row => {
-        const topicInput = row.querySelector('input[placeholder="Enter Topic"]');
-        const questionInput = row.querySelector('input[placeholder="Enter Question"]');
-        const answerInput = row.querySelector('input[placeholder="Enter Answer"]');
-        const topic = topicInput ? `"${topicInput.value.trim().replace(/"/g, '""')}"` : '';
-        const question = questionInput ? `"${questionInput.value.trim().replace(/"/g, '""')}"` : '';
-        const answer = answerInput ? `"${answerInput.value.trim().replace(/"/g, '""')}"` : '';
+        cards.forEach(card => {
+            const topic = card.querySelector('input[placeholder="Enter Topic"]').value.trim();
+            const information = card.querySelector('input[placeholder="Enter Information"]').value.trim();
+            if (topic && information) {
+                csvContent += `"${topic}","${information}"\n`;
+            }
+        });
 
-        // Add row to CSV only if any of the fields are not empty
-        if (topic || question || answer) {
-            csv.push(`${topic},${question},${answer}`);
-        }
-    });
-
-    // Check if there's data to download, if not, provide an empty file
-    if (csv.length === 0) {
-        csv.push('"Topic","Question","Answer"');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', 'mindcards.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
-
-    const csvContent = csv.join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-
-    const fileName = prompt("Enter a file name for your CSV", "cards.csv"); // Prompt user for file name
-    if (!fileName) return; // If user cancels, exit the function
-
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", fileName);
-    document.body.appendChild(link);
-
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url); // Clean up the URL
-}
-
-
 
     function importCSV() {
         const file = document.getElementById('importFile').files[0];
-        const reader = new FileReader();
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const text = event.target.result;
+                const rows = text.split('\n').filter(row => row);
 
-        reader.onload = function(e) {
-            const content = e.target.result;
-            const rows = content.split("\n");
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = ''; // Clear existing rows
+                rows.forEach(row => {
+                    const [topic, information] = row.split(',').map(cell => cell.replace(/(^"|"$)/g, '').trim());
 
-            rows.forEach(row => {
-                const columns = row.split(",");
-                if (columns.length === 3) {
-                    const newRow = document.createElement('tr');
-                    newRow.innerHTML = `
-                        <td><input type="text" value="${columns[0].trim()}" placeholder="Enter Topic"></td>
-                        <td><input type="text" value="${columns[1].trim()}" placeholder="Enter Question"></td>
-                        <td><input type="text" value="${columns[2].trim()}" placeholder="Enter Answer"></td>
-                        <td>
-                            <button class="add-row-button" onclick="addRowBelow(this, true)">➕</button>
-                            <button class="delete-button" onclick="deleteRow(this)">🗑️</button>
-                        </td>
-                    `;
-                    tableBody.appendChild(newRow);
-                }
-            });
-        };
-
-        reader.readAsText(file);
+                    if (topic && information) {
+                        const tableBody = document.getElementById('tableBody');
+                        const newCard = document.createElement('tr');
+                        newCard.innerHTML = `
+                            <td><input type="text" value="${topic}" placeholder="Enter Topic"></td>
+                            <td><input type="text" value="${information}" placeholder="Enter Information"></td>
+                            <td>
+                                <button class="add-card-button" onclick="addCardBelow(this, true)" style="font-size: 24px; font-weight: bold;">+</button>
+                                <button class="delete-button" onclick="deleteCard(this)">🗑️</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(newCard);
+                    }
+                });
+            };
+            reader.readAsText(file);
+        }
     }
 </script>
-
 </body>
 </html>
