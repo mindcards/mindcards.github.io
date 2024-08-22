@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mindcards</title>
     <style>
-        /* Base styles for the body */
-        body {
+                /* Base styles for the body */
+                body {
             font-family: Arial, sans-serif;
             margin: 20px;
             background-color: #1a1a1a;
@@ -121,6 +121,31 @@
         .title-input-container {
             margin-bottom: 10px;
         }
+        .info-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 1001;
+            max-width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        .info-popup h2 {
+            margin-top: 0;
+        }
+        .info-popup ul {
+            padding-left: 20px;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -162,49 +187,57 @@
     const stopwatchButton = document.getElementById("stopwatchButton");
     const downloadButton = document.getElementById("downloadButton");
     const addCardsButton = document.getElementById("addCardsButton");
-
+    
     // Initialize stopwatch variables
     let stopwatchInterval;
     let stopwatchRunning = false;
     let stopwatchStarted = false;
-
+    
     // Define question types
     const questionTypes = [
-"Alpha Definition",
-"Beta Reason",
-"Gamma Features",
-"Delta Method",
-"Epsilon Impact",
-"Zeta Parts",
-"Eta Challenges"
-];
-
+        "Alpha Definition 1",
+        "Beta Reason 1",
+        "Gamma Features 1",
+        "Delta Method 1",
+        "Epsilon Impact 1",
+        "Zeta Parts 1",
+        "Eta Challenges 1",
+        "Theta Exceptions 1"
+    ];
+    
+    // Function to generate the next question type
+    function getNextQuestionType(currentType) {
+        const [base, type, number] = currentType.split(' ');
+        const nextNumber = parseInt(number) + 1;
+        return `${base} ${type} ${nextNumber}`;
+    }
+    
     // Function to add a new row to the table
     function addRow(questionType = "", keyword = "", answer = "", yourAnswer = "", afterRow = null) {
         const newRow = document.createElement("tr");
-
+    
         // Create table cells
         const questionTypeCell = document.createElement("td");
         const keywordCell = document.createElement("td");
         const answerCell = document.createElement("td");
         const yourAnswerCell = document.createElement("td");
         const actionCell = document.createElement("td");
-
+    
         // Create and configure question type input
         const questionTypeInput = document.createElement("input");
         questionTypeInput.type = "text";
-        questionTypeInput.value = questionType;
+        questionTypeInput.value = questionType || questionTypes[0];
         questionTypeInput.placeholder = "Enter question type";
         questionTypeInput.disabled = stopwatchRunning;
         questionTypeCell.appendChild(questionTypeInput);
-
+    
         // Create and configure keyword input
         const keywordInput = document.createElement("input");
         keywordInput.type = "text";
         keywordInput.value = keyword;
         keywordInput.disabled = stopwatchRunning;
         keywordCell.appendChild(keywordInput);
-
+    
         // Create and configure answer input
         const answerInput = document.createElement("input");
         answerInput.type = "text";
@@ -212,7 +245,7 @@
         answerInput.disabled = stopwatchRunning;
         answerInput.style.display = stopwatchRunning ? "none" : "block";
         answerCell.appendChild(answerInput);
-
+    
         // Create and configure your answer input
         const yourAnswerInput = document.createElement("input");
         yourAnswerInput.type = "text";
@@ -220,27 +253,27 @@
         yourAnswerInput.readOnly = !stopwatchRunning;
         yourAnswerInput.style.display = (!stopwatchStarted) ? "none" : "block";
         yourAnswerCell.appendChild(yourAnswerInput);
-
+    
         // Add action buttons if stopwatch is not running
         if (!stopwatchRunning) {
             const addButton = document.createElement("button");
             addButton.textContent = "+";
             addButton.onclick = () => duplicateRow(newRow);
             actionCell.appendChild(addButton);
-
+    
             const deleteButton = document.createElement("button");
             deleteButton.textContent = "🗑️";
             deleteButton.onclick = () => deleteRow(newRow);
             actionCell.appendChild(deleteButton);
         }
-
+    
         // Append cells to the row
         newRow.appendChild(questionTypeCell);
         newRow.appendChild(keywordCell);
         newRow.appendChild(answerCell);
         newRow.appendChild(yourAnswerCell);
         newRow.appendChild(actionCell);
-
+    
         // Insert the new row into the table
         if (afterRow) {
             afterRow.parentNode.insertBefore(newRow, afterRow.nextSibling);
@@ -248,24 +281,28 @@
             tableBody.appendChild(newRow);
         }
     }
-
+    
     // Function to duplicate a row
     function duplicateRow(row) {
         const cells = row.getElementsByTagName("td");
+        const currentQuestionType = cells[0].firstChild.value;
+        const nextQuestionType = getNextQuestionType(currentQuestionType);
         addRow(
-            cells[0].firstChild.value,
+            nextQuestionType,
             cells[1].firstChild.value,
             cells[2].firstChild.value,
             cells[3].firstChild.value,
             row
         );
     }
-
+    
     // Function to delete a row
     function deleteRow(row) {
-        tableBody.removeChild(row);
+        if (tableBody.children.length > 1) {
+            tableBody.removeChild(row);
+        }
     }
-
+    
     // Function to toggle stopwatch
     function toggleStopwatch() {
         if (!stopwatchRunning) {
@@ -274,7 +311,7 @@
             resetStopwatch();
         }
     }
-
+    
     // Function to start stopwatch
     function startStopwatch() {
         if (!stopwatchStarted) {
@@ -288,7 +325,7 @@
         addCardsButton.style.display = "none";
         startTimer();
     }
-
+    
     // Function to reset stopwatch
     function resetStopwatch() {
         stopwatchRunning = false;
@@ -299,7 +336,7 @@
         downloadButton.style.display = "inline-block";
         addCardsButton.style.display = "inline-block";
     }
-
+    
     // Function to toggle table inputs based on stopwatch state
     function toggleTableInputs() {
         const rows = tableBody.getElementsByTagName("tr");
@@ -310,7 +347,7 @@
             const answerInput = cells[2].firstChild;
             const yourAnswerInput = cells[3].firstChild;
             const actionCell = cells[4];
-
+    
             questionTypeInput.disabled = stopwatchRunning;
             keywordInput.disabled = stopwatchRunning;
             yourAnswerInput.readOnly = !stopwatchRunning;
@@ -319,13 +356,13 @@
             actionCell.style.display = stopwatchRunning ? "none" : "block";
         }
     }
-
+    
     // Function to start the timer
     function startTimer() {
         let seconds = 0;
         let minutes = 0;
         let hours = 0;
-
+    
         stopwatchInterval = setInterval(() => {
             seconds++;
             if (seconds === 60) {
@@ -336,15 +373,15 @@
                 minutes = 0;
                 hours++;
             }
-
+    
             const displaySeconds = seconds < 10 ? `0${seconds}` : seconds;
             const displayMinutes = minutes < 10 ? `0${minutes}` : minutes;
             const displayHours = hours < 10 ? `0${hours}` : hours;
-
+    
             stopwatch.textContent = `${displayHours}:${displayMinutes}:${displaySeconds}`;
         }, 1000);
     }
-
+    
     // Function to show the add cards prompt
     function showPrompt() {
         const overlay = document.createElement('div');
@@ -352,14 +389,11 @@
         overlay.innerHTML = `
             <div class="prompt-box">
                 <div class="prompt-description">
-                    Enter paragraph titles. Cards will be created for each title with all question types.
+                    Please enter keywords separated by commas.
                 </div>
-                <div id="titleInputs">
-                    <div class="title-input-container">
-                        <input type="text" class="titleInput" placeholder="Enter paragraph title">
-                    </div>
+                <div id="keywordInput">
+                    <input type="text" id="keywordsInput" placeholder="Enter keywords (comma-separated)">
                 </div>
-                <button onclick="addTitleInput()">Add More Titles</button>
                 <button onclick="createCards()">Create Cards</button>
                 <button onclick="importCards()">Import Cards</button>
                 <button onclick="closePrompt()">Close</button>
@@ -367,7 +401,7 @@
         `;
         document.body.appendChild(overlay);
     }
-
+    
     // Function to close the prompt
     function closePrompt() {
         const overlay = document.querySelector('.overlay');
@@ -375,31 +409,21 @@
             document.body.removeChild(overlay);
         }
     }
-
-    // Function to add a new title input field
-    function addTitleInput() {
-        const titleInputs = document.getElementById('titleInputs');
-        const newInput = document.createElement('div');
-        newInput.className = 'title-input-container';
-        newInput.innerHTML = '<input type="text" class="titleInput" placeholder="Enter paragraph title">';
-        titleInputs.appendChild(newInput);
-    }
-
-    // Function to create cards based on entered titles
+    
+    // Function to create cards based on entered keywords
     function createCards() {
-        const titleInputs = document.querySelectorAll('.titleInput');
-        titleInputs.forEach(input => {
-            const title = input.value.trim();
-            if (title) {
-                questionTypes.forEach(questionType => {
-                    addRow(questionType, title, "", "");
-                });
-            }
+        const keywordsInput = document.getElementById('keywordsInput');
+        const keywords = keywordsInput.value.split(',').map(k => k.trim()).filter(k => k);
+        
+        keywords.forEach(keyword => {
+            questionTypes.forEach(questionType => {
+                addRow(questionType, keyword, "", "");
+            });
         });
-
+    
         closePrompt();
     }
-
+    
     // Function to import cards from a file
     function importCards() {
         const input = document.createElement('input');
@@ -412,20 +436,20 @@
                 reader.onload = function(e) {
                     const content = e.target.result.trim();
                     const rows = content.split(/\n\s*\n/);
-                    
+                   
                     rows.forEach(row => {
                         const lines = row.split("\n");
-
+    
                         if (lines.length === 4) {
                             const questionTypeLine = lines[0].replace('Question Type: ', '').trim();
                             const keywordLine = lines[1].replace('Keyword: ', '').trim();
                             const answerLine = lines[2].replace('Answer: ', '').trim();
                             const yourAnswerLine = lines[3].replace('Your Answer: ', '').trim();
-
+    
                             addRow(questionTypeLine, keywordLine, answerLine, yourAnswerLine);
                         }
                     });
-
+    
                     closePrompt();
                 };
                 reader.readAsText(file);
@@ -433,22 +457,22 @@
         };
         input.click();
     }
-
+    
     // Function to download the table content as a TXT file
     function downloadTXT() {
         const rows = tableBody.getElementsByTagName("tr");
         let content = "";
-
+    
         for (let i = 0; i < rows.length; i++) {
             const cells = rows[i].getElementsByTagName("td");
             const questionType = cells[0].firstChild.value;
             const keyword = cells[1].firstChild.value;
             const answer = cells[2].firstChild.value;
             const yourAnswer = cells[3].firstChild.value;
-
-            content += `Question Type: ${questionType} \nKeyword: ${keyword} \nAnswer: ${answer} \nYour Answer: ${yourAnswer}\n \n`;
+    
+            content += `Question Type: ${questionType}\nKeyword: ${keyword}\nAnswer: ${answer}\nYour Answer: ${yourAnswer}\n\n`;
         }
-
+    
         const blob = new Blob([content], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -457,11 +481,44 @@
         a.click();
         URL.revokeObjectURL(url);
     }
-
-    // Add a blank card when the page loads
+    
+    // Function to show app information
+    function showAppInfo() {
+        const infoPopup = document.createElement('div');
+        infoPopup.className = 'info-popup';
+        infoPopup.innerHTML = `
+            <h2>Mindcards App Features</h2>
+            <p>Welcome to Mindcards! Here's a brief overview of the app's features:</p>
+            <ul>
+                <li>Create flashcards with various question types</li>
+                <li>Add multiple cards at once using keywords</li>
+                <li>Import and export cards</li>
+                <li>Use a stopwatch for timed study sessions</li>
+            </ul>
+            <h3>Question Types:</h3>
+            <ul>
+                ${questionTypes.map(type => `<li>${type}</li>`).join('')}
+            </ul>
+            <p>The numbering system automatically increments (e.g., "Alpha Definition 1" -> "Alpha Definition 2") when duplicating cards.</p>
+            <button onclick="closeAppInfo()">Close</button>
+        `;
+        document.body.appendChild(infoPopup);
+    }
+    
+    // Function to close app information popup
+    function closeAppInfo() {
+        const infoPopup = document.querySelector('.info-popup');
+        if (infoPopup) {
+            document.body.removeChild(infoPopup);
+            showPrompt(); // Show the Add Cards prompt immediately after closing the app info
+        }
+    }
+    
+    // Show app information when the page loads
     window.onload = function() {
-        addRow();
+        showAppInfo();
+        addRow(); // Add a blank card when the page loads
     };
-</script>
+    </script>
 </body>
 </html>
