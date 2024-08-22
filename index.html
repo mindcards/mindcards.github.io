@@ -5,40 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mindcards</title>
     <style>
+        /* Base styles for the body */
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
             background-color: #1a1a1a;
             color: #f4f4f4;
         }
+        /* Header styling */
         .header {
             text-align: center;
             margin-bottom: 20px;
         }
+        /* Container for buttons */
         .button-container {
             display: flex;
             justify-content: flex-end;
             margin-bottom: 10px;
         }
+        /* Table styling */
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
         }
+        /* Table header and cell styling */
         th, td {
             padding: 10px;
             text-align: left;
             resize: horizontal;
             overflow: auto;
         }
+        /* Table header specific styling */
         th {
             background-color: #007BFF;
             color: white;
             border-bottom: 2px solid #0056b3;
         }
+        /* Table cell border */
         td {
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
+        /* Input field styling */
         input[type="text"] {
             width: 100%;
             padding: 8px;
@@ -48,6 +56,7 @@
             border: none;
             border-radius: 4px;
         }
+        /* Button styling */
         button {
             margin-left: 10px;
             padding: 10px 20px;
@@ -57,9 +66,11 @@
             border-radius: 4px;
             cursor: pointer;
         }
+        /* Button hover effect */
         button:hover {
             background-color: #0056b3;
         }
+        /* File input styling */
         input[type="file"] {
             margin-left: 10px;
             padding: 10px;
@@ -69,9 +80,11 @@
             border-radius: 4px;
             cursor: pointer;
         }
+        /* File input hover effect */
         input[type="file"]:hover {
             background-color: #0056b3;
         }
+        /* Stopwatch styling */
         #stopwatch {
             position: absolute;
             top: 10px;
@@ -79,6 +92,7 @@
             font-size: 24px;
             font-weight: bold;
         }
+        /* Overlay for prompt */
         .overlay {
             position: fixed;
             top: 0;
@@ -91,6 +105,7 @@
             align-items: center;
             z-index: 1000;
         }
+        /* Prompt box styling */
         .prompt-box {
             background-color: #2a2a2a;
             padding: 20px;
@@ -98,9 +113,11 @@
             width: 80%;
             max-width: 500px;
         }
+        /* Prompt description styling */
         .prompt-description {
             margin-bottom: 15px;
         }
+        /* Title input container styling */
         .title-input-container {
             margin-bottom: 10px;
         }
@@ -108,18 +125,22 @@
 </head>
 <body>
 
+<!-- Header -->
 <div class="header">
     <h1>Mindcards</h1>
 </div>
 
+<!-- Stopwatch display -->
 <div id="stopwatch">00:00:00</div>
 
+<!-- Button container -->
 <div class="button-container">
-    <button onclick="showPrompt()">Add Cards</button>
+    <button id="addCardsButton" onclick="showPrompt()">Add Cards</button>
     <button id="stopwatchButton" onclick="toggleStopwatch()">Start Stopwatch</button>
     <button id="downloadButton" onclick="downloadTXT()">Download</button>
 </div>
 
+<!-- Main table -->
 <table id="mindcardTable">
     <thead>
         <tr>
@@ -135,25 +156,41 @@
 </table>
 
 <script>
+    // Get references to DOM elements
     const tableBody = document.getElementById("tableBody");
     const stopwatch = document.getElementById("stopwatch");
     const stopwatchButton = document.getElementById("stopwatchButton");
     const downloadButton = document.getElementById("downloadButton");
+    const addCardsButton = document.getElementById("addCardsButton");
+
+    // Initialize stopwatch variables
     let stopwatchInterval;
     let stopwatchRunning = false;
     let stopwatchStarted = false;
 
-    const questionTypes = ["Reason", "Method", "Definition", "Example", "Application"];
+    // Define question types
+    const questionTypes = [
+"Alpha Definition",
+"Beta Reason",
+"Gamma Features",
+"Delta Method",
+"Epsilon Impact",
+"Zeta Types",
+"Eta Challenges"
+];
 
+    // Function to add a new row to the table
     function addRow(questionType = "", keyword = "", answer = "", yourAnswer = "", afterRow = null) {
         const newRow = document.createElement("tr");
 
+        // Create table cells
         const questionTypeCell = document.createElement("td");
         const keywordCell = document.createElement("td");
         const answerCell = document.createElement("td");
         const yourAnswerCell = document.createElement("td");
         const actionCell = document.createElement("td");
 
+        // Create and configure question type input
         const questionTypeInput = document.createElement("input");
         questionTypeInput.type = "text";
         questionTypeInput.value = questionType;
@@ -161,12 +198,14 @@
         questionTypeInput.disabled = stopwatchRunning;
         questionTypeCell.appendChild(questionTypeInput);
 
+        // Create and configure keyword input
         const keywordInput = document.createElement("input");
         keywordInput.type = "text";
         keywordInput.value = keyword;
         keywordInput.disabled = stopwatchRunning;
         keywordCell.appendChild(keywordInput);
 
+        // Create and configure answer input
         const answerInput = document.createElement("input");
         answerInput.type = "text";
         answerInput.value = answer;
@@ -174,6 +213,7 @@
         answerInput.style.display = stopwatchRunning ? "none" : "block";
         answerCell.appendChild(answerInput);
 
+        // Create and configure your answer input
         const yourAnswerInput = document.createElement("input");
         yourAnswerInput.type = "text";
         yourAnswerInput.value = yourAnswer;
@@ -181,6 +221,7 @@
         yourAnswerInput.style.display = (!stopwatchStarted) ? "none" : "block";
         yourAnswerCell.appendChild(yourAnswerInput);
 
+        // Add action buttons if stopwatch is not running
         if (!stopwatchRunning) {
             const addButton = document.createElement("button");
             addButton.textContent = "+";
@@ -193,12 +234,14 @@
             actionCell.appendChild(deleteButton);
         }
 
+        // Append cells to the row
         newRow.appendChild(questionTypeCell);
         newRow.appendChild(keywordCell);
         newRow.appendChild(answerCell);
         newRow.appendChild(yourAnswerCell);
         newRow.appendChild(actionCell);
 
+        // Insert the new row into the table
         if (afterRow) {
             afterRow.parentNode.insertBefore(newRow, afterRow.nextSibling);
         } else {
@@ -206,6 +249,7 @@
         }
     }
 
+    // Function to duplicate a row
     function duplicateRow(row) {
         const cells = row.getElementsByTagName("td");
         addRow(
@@ -217,10 +261,12 @@
         );
     }
 
+    // Function to delete a row
     function deleteRow(row) {
         tableBody.removeChild(row);
     }
 
+    // Function to toggle stopwatch
     function toggleStopwatch() {
         if (!stopwatchRunning) {
             startStopwatch();
@@ -229,6 +275,7 @@
         }
     }
 
+    // Function to start stopwatch
     function startStopwatch() {
         if (!stopwatchStarted) {
             stopwatchStarted = true;
@@ -238,9 +285,11 @@
         toggleTableInputs();
         stopwatchButton.textContent = "Reset Stopwatch";
         downloadButton.style.display = "none";
+        addCardsButton.style.display = "none";
         startTimer();
     }
 
+    // Function to reset stopwatch
     function resetStopwatch() {
         stopwatchRunning = false;
         toggleTableInputs();
@@ -248,8 +297,10 @@
         stopwatch.textContent = "00:00:00";
         stopwatchButton.textContent = "Start Stopwatch";
         downloadButton.style.display = "inline-block";
+        addCardsButton.style.display = "inline-block";
     }
 
+    // Function to toggle table inputs based on stopwatch state
     function toggleTableInputs() {
         const rows = tableBody.getElementsByTagName("tr");
         for (let i = 0; i < rows.length; i++) {
@@ -269,6 +320,7 @@
         }
     }
 
+    // Function to start the timer
     function startTimer() {
         let seconds = 0;
         let minutes = 0;
@@ -293,6 +345,7 @@
         }, 1000);
     }
 
+    // Function to show the add cards prompt
     function showPrompt() {
         const overlay = document.createElement('div');
         overlay.className = 'overlay';
@@ -309,11 +362,21 @@
                 <button onclick="addTitleInput()">Add More Titles</button>
                 <button onclick="createCards()">Create Cards</button>
                 <button onclick="importCards()">Import Cards</button>
+                <button onclick="closePrompt()">Close</button>
             </div>
         `;
         document.body.appendChild(overlay);
     }
 
+    // Function to close the prompt
+    function closePrompt() {
+        const overlay = document.querySelector('.overlay');
+        if (overlay) {
+            document.body.removeChild(overlay);
+        }
+    }
+
+    // Function to add a new title input field
     function addTitleInput() {
         const titleInputs = document.getElementById('titleInputs');
         const newInput = document.createElement('div');
@@ -322,6 +385,7 @@
         titleInputs.appendChild(newInput);
     }
 
+    // Function to create cards based on entered titles
     function createCards() {
         const titleInputs = document.querySelectorAll('.titleInput');
         titleInputs.forEach(input => {
@@ -333,12 +397,10 @@
             }
         });
 
-        const overlay = document.querySelector('.overlay');
-        if (overlay) {
-            document.body.removeChild(overlay);
-        }
+        closePrompt();
     }
 
+    // Function to import cards from a file
     function importCards() {
         const input = document.createElement('input');
         input.type = 'file';
@@ -364,10 +426,7 @@
                         }
                     });
 
-                    const overlay = document.querySelector('.overlay');
-                    if (overlay) {
-                        document.body.removeChild(overlay);
-                    }
+                    closePrompt();
                 };
                 reader.readAsText(file);
             }
@@ -375,6 +434,7 @@
         input.click();
     }
 
+    // Function to download the table content as a TXT file
     function downloadTXT() {
         const rows = tableBody.getElementsByTagName("tr");
         let content = "";
@@ -398,8 +458,10 @@
         URL.revokeObjectURL(url);
     }
 
-    // Show prompt immediately when the page loads
-    window.onload = showPrompt;
+    // Add a blank card when the page loads
+    window.onload = function() {
+        addRow();
+    };
 </script>
 </body>
 </html>
