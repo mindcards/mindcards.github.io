@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mindcards</title>
     <style>
-                /* Base styles for the body */
-                body {
+        /* Base styles for the body */
+        body {
             font-family: Arial, sans-serif;
             margin: 20px;
             background-color: #1a1a1a;
@@ -163,6 +163,9 @@
     <button id="addCardsButton" onclick="showPrompt()">Add Cards</button>
     <button id="stopwatchButton" onclick="toggleStopwatch()">Start Stopwatch</button>
     <button id="downloadButton" onclick="downloadTXT()">Download</button>
+    <a href="https://youtu.be/bz20Yf3kX0o?si=Hi1BJ4n1X0BqXGGf" target="_blank">
+        <button>Play Focus Music</button>
+    </a>
 </div>
 
 <!-- Main table -->
@@ -389,14 +392,15 @@
         overlay.innerHTML = `
             <div class="prompt-box">
                 <div class="prompt-description">
-                    Please enter keywords separated by commas.
+                    Create cards using keywords which you enter below. Separate the keywords by commas / full stops / colons / semicolons.
                 </div>
                 <div id="keywordInput">
-                    <input type="text" id="keywordsInput" placeholder="Enter keywords (comma-separated)">
+                    <input type="text" id="keywordsInput" placeholder="Enter keywords">
                 </div>
-                <button onclick="createCards()">Create Cards</button>
-                <button onclick="importCards()">Import Cards</button>
-                <button onclick="closePrompt()">Close</button>
+                
+                <button onclick="createCards()">Create Cards using Keywords</button>
+                <button onclick="importCards()">Import</button>
+                <button onclick="closePrompt()">Start from Scratch</button>
             </div>
         `;
         document.body.appendChild(overlay);
@@ -413,7 +417,7 @@
     // Function to create cards based on entered keywords
     function createCards() {
         const keywordsInput = document.getElementById('keywordsInput');
-        const keywords = keywordsInput.value.split(',').map(k => k.trim()).filter(k => k);
+        const keywords = keywordsInput.value.split(/[,.:;]\s*/).map(k => k.trim()).filter(k => k);
         
         keywords.forEach(keyword => {
             questionTypes.forEach(questionType => {
@@ -424,39 +428,37 @@
         closePrompt();
     }
     
-    // Function to import cards from a file
     function importCards() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.txt';
-        input.onchange = function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const content = e.target.result.trim();
-                    const rows = content.split(/\n\s*\n/);
-                   
-                    rows.forEach(row => {
-                        const lines = row.split("\n");
-    
-                        if (lines.length === 4) {
-                            const questionTypeLine = lines[0].replace('Question Type: ', '').trim();
-                            const keywordLine = lines[1].replace('Keyword: ', '').trim();
-                            const answerLine = lines[2].replace('Answer: ', '').trim();
-                            const yourAnswerLine = lines[3].replace('Your Answer: ', '').trim();
-    
-                            addRow(questionTypeLine, keywordLine, answerLine, yourAnswerLine);
-                        }
-                    });
-    
-                    closePrompt();
-                };
-                reader.readAsText(file);
-            }
-        };
-        input.click();
-    }
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.txt';
+    input.onchange = function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result.trim();
+                const cards = content.split('\n\n');
+                
+                cards.forEach(card => {
+                    const lines = card.split('\n');
+                    if (lines.length === 4) {
+                        const questionType = lines[0].replace('Question Type: ', '').trim();
+                        const keyword = lines[1].replace('Keyword: ', '').trim();
+                        const answer = lines[2].replace('Answer: ', '').trim();
+                        const yourAnswer = lines[3].replace('Your Answer: ', '').trim();
+                        
+                        addRow(questionType, keyword, answer, yourAnswer);
+                    }
+                });
+                
+                closePrompt();
+            };
+            reader.readAsText(file);
+        }
+    };
+    input.click();
+}
     
     // Function to download the table content as a TXT file
     function downloadTXT() {
@@ -519,6 +521,6 @@
         showAppInfo();
         addRow(); // Add a blank card when the page loads
     };
-    </script>
+</script>
 </body>
 </html>
